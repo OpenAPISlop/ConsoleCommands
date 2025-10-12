@@ -1,0 +1,638 @@
+
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <title>Console Utilities — mobile-first dark UI, XHR only</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { color-scheme: dark; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      --bg: #0b0d10; --surface: #11151a; --muted: #8a92a6; --text: #e5e7eb; --accent: #7dd3fc;
+      --border: #1f2937; --chip: #0f172a;
+      background: var(--bg); color: var(--text); font: 16px/1.55 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 1.25rem; }
+    header { padding: .25rem 0 1rem; display:flex; flex-direction:column; gap:.75rem; }
+    h1 { font-size: 1.4rem; margin: .2rem 0 .25rem; }
+    p, li { color: var(--text); }
+    .muted { color: var(--muted); }
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      padding: 1rem; margin: .75rem 0;
+    }
+    .hr { height:1px; background: var(--border); margin: .75rem 0; border:0; }
+    code,kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    kbd { background: var(--chip); border: 1px solid var(--border); border-radius: 6px; padding: .08rem .35rem; }
+    .btn {
+      appearance: none; border: 1px solid var(--border); background: #0d1422; color: var(--text);
+      padding: .55rem .8rem; border-radius: 10px; font-weight: 600; cursor: pointer;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn.small { padding:.4rem .6rem; font-size:.9rem; }
+    .grid { display: grid; gap: .75rem; grid-template-columns: 1fr; }
+    @media (min-width: 760px) { .grid { grid-template-columns: 1fr 1fr; } }
+    .pill { display:inline-block; font-size:.8rem; padding:.16rem .5rem; border:1px solid var(--border); border-radius:999px; color:var(--muted); }
+
+    /* --- Command table: mobile-first, stack name over desc; upgrade to 2-col on ≥600px --- */
+    .cmd-table {
+      display:grid;
+      grid-template-columns: 1fr;               /* stack on phones */
+      gap:.6rem .9rem;
+      align-items:start;
+    }
+    @media (min-width: 600px) {
+      .cmd-table { grid-template-columns: minmax(140px, 1.2fr) 2.8fr; }
+    }
+    .cmd-name,
+    .cmd-desc { min-width:0; }                  /* allow flex/grid shrinking */
+    .cmd-name {
+      background: var(--chip); border: 1px solid var(--border); border-radius: 8px;
+      padding: .45rem .55rem;
+      word-break: break-word; overflow-wrap:anywhere; white-space: normal;
+    }
+    .cmd-name code { white-space: pre-wrap; }
+    .cmd-desc {
+      color: var(--muted); padding: .25rem 0;
+      overflow-wrap:anywhere; word-break: break-word;
+    }
+
+    .mono {
+      background: var(--chip); border:1px solid var(--border); padding:.6rem .65rem; border-radius:8px;
+      overflow:auto; word-break: break-word; white-space: pre-wrap; max-height: 12rem;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    .row { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Console Utilities</h1>
+      <p class="muted">Open DevTools → <kbd>Console</kbd> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> / <kbd>⌥⌘I</kbd>). Type <code>help()</code> to view commands. Every command prints <em>strings only</em> to the Console and returns <code>undefined</code>. Networking uses pure <strong>XHR</strong> (no <code>fetch</code>).</p>
+      <div class="row">
+        <button class="btn" id="printDocsBtn">Print docs to Console</button>
+        <span class="pill">Try</span>
+        <code class="mono">ip()</code>
+        <code class="mono">weather("Austin")</code>
+        <code class="mono">crypto("bitcoin")</code>
+        <code class="mono">news("AI",5)</code>
+      </div>
+    </header>
+
+    <section class="grid">
+      <div class="card">
+        <strong>Quick Start</strong>
+        <div class="hr"></div>
+        <p>In the Console, run <code>help()</code> (short) or <code>help("all")</code> (full). You can also click the button above to dump the docs and signatures to the Console.</p>
+        <p class="muted">Tip: Use <code>geo("City")</code> to set a location and then call <code>weather()</code>, <code>aqi()</code>, or <code>sun()</code> with no args.</p>
+      </div>
+      <div class="card">
+        <strong>Top Commands</strong>
+        <div class="hr"></div>
+        <div class="cmd-table">
+          <div class="cmd-name"><code>ip()</code></div>
+          <div class="cmd-desc">Public IP, ISP/Org, city, timezone</div>
+
+          <div class="cmd-name"><code>weather("City")</code></div>
+          <div class="cmd-desc">Current temp (°F), feels-like, wind, precip, sky code</div>
+
+          <div class="cmd-name"><code>aqi("City")</code></div>
+          <div class="cmd-desc">US AQI + PM2.5/PM10/O₃</div>
+
+          <div class="cmd-name"><code>hn(5)</code></div>
+          <div class="cmd-desc">Top Hacker News headlines</div>
+
+          <div class="cmd-name"><code>news("AI",5)</code></div>
+          <div class="cmd-desc">Simple news via HN Algolia search</div>
+
+          <div class="cmd-name"><code>gh("user")</code></div>
+          <div class="cmd-desc">GitHub user/org quick stats</div>
+
+          <div class="cmd-name"><code>npmSearch("react",5)</code></div>
+          <div class="cmd-desc">npm registry search (top hits)</div>
+
+          <div class="cmd-name"><code>crypto("ethereum")</code></div>
+          <div class="cmd-desc">Crypto price via CoinGecko</div>
+
+          <div class="cmd-name"><code>fx("USD","EUR",100)</code></div>
+          <div class="cmd-desc">Currency conversion (exchangerate.host)</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <strong>Full Reference (Commands vs. Descriptions)</strong>
+      <div class="hr"></div>
+      <div class="cmd-table" id="refTable"><!-- populated by JS from COMMANDS[] --></div>
+    </section>
+
+    <section class="card">
+      <strong>Bookmarklet: Inject a custom command console (PC &amp; Mobile)</strong>
+      <div class="hr"></div>
+      <p>Make a bookmark named, say, <em>“Billy Console”</em>, and paste this into the URL field (exactly as shown):</p>
+      <div class="row" style="justify-content:space-between;">
+        <div class="mono" id="bookmarklet" style="flex:1 1 auto; min-width: 220px;">
+javascript:!function(d,u)%7Bif(d.defaultView.billy)%7Bbilly.off();return%7Dvar%20s=d.createElement('script');s.src=u+(u.includes('?')?'&':'?')+'v='+(Date.now());s.defer=1;s.onerror=function()%7Balert('billy%20load%20failed')%7D;d.documentElement.appendChild(s)%7D(document,'https://cdn.jsdelivr.net/gh/OpenAPISlop/js-command-inject@latest/script.js');
+        </div>
+        <button class="btn small" id="copyBookmarkletBtn" aria-label="Copy bookmarklet">Copy</button>
+      </div>
+      <div class="hr"></div>
+      <ul>
+        <li><strong>PC (Chrome/Edge/Firefox):</strong> Show bookmarks bar → Right-click → “Add page…” → Paste the code above into the <em>URL</em> field. On any page, click the bookmark to toggle the console.</li>
+        <li><strong>iOS (Safari):</strong> Create any bookmark first → Edit it → Replace its URL with the code above → Save. Then visit any page and tap the bookmark.</li>
+        <li><strong>Android (Chrome):</strong> Add a bookmark → Edit → Paste the code into the URL → Save. Tap it on any page.</li>
+      </ul>
+      <p class="muted">Note: It loads a script from <code>GitHub.com</code>.This will mount a custom developer console.</p>
+    </section>
+  </div>
+
+  <script>
+    // ================= CORE HELPERS (XHR-based, no fetch) =================
+    const log = (...parts) => console.log(parts.join(" ").replace(/\s+/g, " ").trim());
+    const run = (fn) => { (async () => { try { await fn(); } catch (e) { log("error:", String(e)); } })(); };
+
+    function xhr(method, url, headers = {}) {
+      return new Promise((resolve, reject) => {
+        try {
+          const x = new XMLHttpRequest();
+          x.open(method, url, true);
+          for (const k in headers) x.setRequestHeader(k, headers[k]);
+          x.onreadystatechange = () => {
+            if (x.readyState === 4) {
+              if (x.status >= 200 && x.status < 300) resolve(x.responseText);
+              else reject(new Error(`HTTP ${x.status} for ${url}`));
+            }
+          };
+          x.onerror = () => reject(new Error("Network error"));
+          x.send(null);
+        } catch (e) { reject(e); }
+      });
+    }
+    const getJSON = (url, headers = {}) => xhr("GET", url, headers).then(txt => { try { return JSON.parse(txt); } catch { throw new Error("Invalid JSON"); } });
+    const getText = (url, headers = {}) => xhr("GET", url, headers);
+
+    // ================= STATE =================
+    let __lastGeo = null; // { lat, lon, name, country }
+
+    // ================= COMMAND REGISTRY (for docs + help) =================
+    const COMMANDS = [
+      { name:'help(which="popular")', usage:'help()', desc:'Show quick list; use help("all") for everything' },
+      { name:'about()', usage:'about()', desc:'List the public APIs used by these utilities' },
+
+      { name:'ip()', usage:'ip()', desc:'Public IP, ISP/Org, city, timezone' },
+      { name:'ipHeaders()', usage:'ipHeaders()', desc:'Echo HTTP headers (UA, Accept, Lang) via httpbin' },
+      { name:'ua()', usage:'ua()', desc:'User agent, platform, language' },
+
+      { name:'time(tz)', usage:'time("America/Chicago")', desc:'Current time for a timezone (WorldTimeAPI)' },
+      { name:'tzList(filter?)', usage:'tzList("America/")', desc:'List timezones; optional filter' },
+      { name:'ts()', usage:'ts()', desc:'Current UNIX/ISO timestamp' },
+
+      { name:'geo(city)', usage:'geo("Austin")', desc:'Geocode city; sets reusable coords' },
+      { name:'weather(city?)', usage:'weather() or weather("Austin")', desc:'Current temperature, feels-like, wind, precip, sky' },
+      { name:'aqi(city?)', usage:'aqi() or aqi("Austin")', desc:'US AQI + PM2.5/PM10/O3' },
+      { name:'sun(city?)', usage:'sun() or sun("Austin")', desc:'Today’s sunrise & sunset times' },
+
+      { name:'fx(from,to,amount)', usage:'fx("USD","EUR",100)', desc:'Currency conversion' },
+      { name:'currencies()', usage:'currencies()', desc:'First 20 currency codes & names' },
+      { name:'btc()', usage:'btc()', desc:'BTC price in USD (CoinDesk)' },
+      { name:'crypto(id)', usage:'crypto("bitcoin")', desc:'Crypto price in USD (CoinGecko)' },
+      { name:'cryptoTop()', usage:'cryptoTop()', desc:'Top 5 market-cap coins (name & USD)' },
+
+      { name:'news(q,n=5)', usage:'news("AI",5)', desc:'Simple news via HN Algolia search' },
+      { name:'hn(n=5)', usage:'hn(5)', desc:'Top Hacker News front page' },
+
+      { name:'gh(userOrOrg)', usage:'gh("vercel")', desc:'GitHub org/user: repos & followers' },
+      { name:'ghRepo(owner,repo)', usage:'ghRepo("vercel","next.js")', desc:'Repo stars, forks, issues' },
+      { name:'npmInfo(pkg)', usage:'npmInfo("react")', desc:'Latest version + description' },
+      { name:'npmDownloads(pkg,range)', usage:'npmDownloads("react","last-week")', desc:'npm downloads (point API)' },
+      { name:'npmSearch(q,n=5)', usage:'npmSearch("react",5)', desc:'npm registry search top N' },
+      { name:'pypiInfo(pkg)', usage:'pypiInfo("requests")', desc:'PyPI latest version + summary' },
+      { name:'devto(n=5)', usage:'devto(5)', desc:'Top DEV.to posts (today)' },
+
+      { name:'spacex()', usage:'spacex()', desc:'Next SpaceX launch name + time (UTC)' },
+      { name:'iss()', usage:'iss()', desc:'Current ISS latitude/longitude' },
+      { name:'quakes(hours=24)', usage:'quakes(24)', desc:'Significant quakes (USGS) last day/week' },
+
+      { name:'holidays(cc,year)', usage:'holidays("US", 2025)', desc:'First 5 public holidays' },
+      { name:'country(code)', usage:'country("US")', desc:'Country facts (name, capital, pop, region)' },
+
+      { name:'define(word)', usage:'define("serendipity")', desc:'Dictionary lookup' },
+      { name:'wiki(title)', usage:'wiki("Teotihuacan")', desc:'Wikipedia summary (first paragraph)' },
+      { name:'joke()', usage:'joke()', desc:'A clean dad joke' },
+      { name:'quote()', usage:'quote()', desc:'Random quote' },
+
+      /* --- Extra “utility” (no network), print-only --- */
+      { name:'uuid()', usage:'uuid()', desc:'Generate a RFC 4122 v4 UUID' },
+      { name:'b64enc(text)', usage:'b64enc("hello")', desc:'Base64 encode (UTF-8)' },
+      { name:'b64dec(text)', usage:'b64dec("aGVsbG8=")', desc:'Base64 decode (UTF-8)' },
+      { name:'urlenc(text)', usage:'urlenc("a b&c")', desc:'encodeURIComponent helper' },
+      { name:'urldec(text)', usage:'urldec("a%20b%26c")', desc:'decodeURIComponent helper' },
+      { name:'count(text)', usage:'count("lorem ipsum")', desc:'Characters, words, lines' },
+      { name:'calc(expr)', usage:'calc("2*(3+4)")', desc:'Evaluate a math expression (Math.* allowed)' },
+      { name:'ping(url)', usage:'ping("https://example.com")', desc:'Simple GET to check reachability (status only)' }
+    ];
+
+    // ================= UTILITIES =================
+    function about() {
+      log([
+        "APIs: ipapi.co (IP), worldtimeapi.org (time), Open-Meteo (geocoding, weather, air),",
+        "sunrise-sunset.org (sun times), httpbin.org (headers), icanhazdadjoke.com (joke),",
+        "api.quotable.io (quote), en.wikipedia.org REST (summary), api.github.com (GitHub),",
+        "registry.npmjs.org & api.npmjs.org (npm), hn.algolia.com (HN search), api.spacexdata.com (SpaceX),",
+        "open-notify.org (ISS), date.nager.at (holidays), exchangerate.host (FX), restcountries.com (country),",
+        "earthquake.usgs.gov (USGS quakes), api.coingecko.com (crypto), dev.to API (developer posts), pypi.org (PyPI)."
+      ].join(" "));
+    }
+
+    // ================= COMMANDS (XHR only; print strings; return undefined) =================
+    function ip() {
+      run(async () => {
+        const j = await getJSON("https://ipapi.co/json/");
+        log(`IP: ${j.ip} · ISP/Org: ${j.org || "n/a"} · ${j.city}, ${j.region}, ${j.country_name} · TZ: ${j.timezone}`);
+      });
+    }
+    function ipHeaders() {
+      run(async () => {
+        const j = await getJSON("https://httpbin.org/headers");
+        const h = j.headers || {};
+        log(`Headers: UA=${h["User-Agent"] || h["User-agent"] || "n/a"} · Accept=${h["Accept"] || "n/a"} · Lang=${h["Accept-Language"] || "n/a"}`);
+      });
+    }
+    function ua() {
+      const nav = window.navigator || {};
+      log(`UA: ${nav.userAgent || "n/a"} · Platform: ${nav.platform || "n/a"} · Lang: ${nav.language || "n/a"}`);
+    }
+
+    function time(tz = "Etc/UTC") {
+      run(async () => {
+        const j = await getJSON(`https://worldtimeapi.org/api/timezone/${encodeURIComponent(tz)}`);
+        if (j.error) return log(`Time in ${tz}: unavailable (${j.error})`);
+        const dt = new Date(j.datetime);
+        log(`Time in ${tz}: ${dt.toLocaleString()} (UTC${j.utc_offset}) · Abbrev: ${j.abbreviation}`);
+      });
+    }
+    function tzList(filter = "") {
+      run(async () => {
+        const j = await getJSON("https://worldtimeapi.org/api/timezone");
+        const list = (Array.isArray(j) ? j : []).filter(x => x.toLowerCase().includes(String(filter).toLowerCase())).slice(0, 15);
+        log(`Timezones${filter ? ` matching "${filter}"` : ""} (first ${list.length}): ${list.join(" | ") || "none"}`);
+      });
+    }
+    function ts() {
+      const now = new Date(); log(`Now: ${now.toISOString()} · UNIX: ${Math.floor(now.getTime()/1000)}`);
+    }
+
+    function geo(city) {
+      if (!city) { log('geo usage: geo("City")'); return; }
+      run(async () => {
+        const j = await getJSON(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
+        if (!j.results || !j.results.length) return log(`geo: no results for ${city}`);
+        const g = j.results[0];
+        __lastGeo = { lat: g.latitude, lon: g.longitude, name: g.name, country: g.country };
+        log(`Geo ${g.name}, ${g.country}: lat ${g.latitude.toFixed(4)}, lon ${g.longitude.toFixed(4)} (set as current)`);
+      });
+    }
+    const weatherCodes = {0:"Clear",1:"Mainly clear",2:"Partly cloudy",3:"Overcast",45:"Fog",48:"Fog",51:"Drizzle",53:"Drizzle",55:"Drizzle",56:"Freezing drizzle",57:"Freezing drizzle",61:"Rain",63:"Rain",65:"Rain",66:"Freezing rain",67:"Freezing rain",71:"Snow",73:"Snow",75:"Snow",77:"Snow grains",80:"Rain showers",81:"Rain showers",82:"Rain showers",85:"Snow showers",86:"Snow showers",95:"Thunderstorm",96:"Thunderstorm",99:"Thunderstorm"};
+    function weather(city) {
+      run(async () => {
+        if (city) {
+          const jg = await getJSON(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
+          if (!jg.results || !jg.results.length) return log(`weather: no results for ${city}`);
+          __lastGeo = { lat: jg.results[0].latitude, lon: jg.results[0].longitude, name: jg.results[0].name, country: jg.results[0].country };
+        }
+        if (!__lastGeo) return log('weather usage: weather("City") or run geo("City") first');
+        const g = __lastGeo;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${g.lat}&longitude=${g.lon}&current=temperature_2m,apparent_temperature,wind_speed_10m,precipitation,weather_code&temperature_unit=°F&windspeed_unit=mph&precipitation_unit=inch`;
+        const j = await getJSON(url);
+        const c = j.current || {};
+        log(`Weather ${g.name}, ${g.country}: ${c.temperature_2m}°F (feels ${c.apparent_temperature}°F), Wind ${c.wind_speed_10m} mph, Precip ${c.precipitation} in, ${weatherCodes[c.weather_code] ?? "N/A"}`);
+      });
+    }
+    function aqi(city) {
+      run(async () => {
+        if (city) {
+          const jg = await getJSON(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
+          if (!jg.results || !jg.results.length) return log(`aqi: no results for ${city}`);
+          __lastGeo = { lat: jg.results[0].latitude, lon: jg.results[0].longitude, name: jg.results[0].name, country: jg.results[0].country };
+        }
+        if (!__lastGeo) return log('aqi usage: aqi("City") or run geo("City") first');
+        const g = __lastGeo;
+        const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${g.lat}&longitude=${g.lon}&current=us_aqi,pm2_5,pm10,carbon_monoxide,nitrogen_dioxide,ozone,sulphur_dioxide`;
+        const j = await getJSON(url);
+        const c = j.current || {};
+        log(`Air ${g.name}, ${g.country}: US AQI ${c.us_aqi ?? "n/a"} · PM2.5 ${c.pm2_5 ?? "n/a"} µg/m³ · PM10 ${c.pm10 ?? "n/a"} µg/m³ · O₃ ${c.ozone ?? "n/a"} µg/m³`);
+      });
+    }
+    function sun(city) {
+      run(async () => {
+        if (city) {
+          const jg = await getJSON(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
+          if (!jg.results || !jg.results.length) return log(`sun: no results for ${city}`);
+          __lastGeo = { lat: jg.results[0].latitude, lon: jg.results[0].longitude, name: jg.results[0].name, country: jg.results[0].country };
+        }
+        if (!__lastGeo) return log('sun usage: sun("City") or run geo("City") first');
+        const g = __lastGeo;
+        const j = await getJSON(`https://api.sunrise-sunset.org/json?lat=${g.lat}&lng=${g.lon}&formatted=0`);
+        const r = j.results || {};
+        const rise = r.sunrise ? new Date(r.sunrise).toLocaleTimeString() : "n/a";
+        const set  = r.sunset  ? new Date(r.sunset).toLocaleTimeString()  : "n/a";
+        log(`Sun ${g.name}, ${g.country}: Sunrise ${rise}, Sunset ${set}`);
+      });
+    }
+
+    function fx(from, to, amount = 1) {
+      if (!from || !to) { log('fx usage: fx("USD","EUR",100)'); return; }
+      run(async () => {
+        const j = await getJSON(`https://api.exchangerate.host/convert?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&amount=${encodeURIComponent(amount)}`);
+        log(`${amount} ${String(from).toUpperCase()} → ${String(to).toUpperCase()}: ${Number(j.result).toLocaleString(undefined, { maximumFractionDigits: 4 })}`);
+      });
+    }
+    function currencies() {
+      run(async () => {
+        const j = await getJSON("https://api.exchangerate.host/symbols");
+        const keys = Object.keys(j.symbols || {}).slice(0, 20);
+        log(`Currencies (first 20): ${keys.map(k => `${k}=${j.symbols[k].description}`).join(" | ") || "n/a"}`);
+      });
+    }
+    function btc() {
+      run(async () => {
+        const j = await getJSON("https://api.coindesk.com/v1/bpi/currentprice/USD.json");
+        const rate = j?.bpi?.USD?.rate_float;
+        if (typeof rate !== "number") return log("BTC/USD: unavailable");
+        log(`BTC/USD: $${rate.toLocaleString(undefined, { maximumFractionDigits: 2 })}`);
+      });
+    }
+    function crypto(id="bitcoin") {
+      run(async () => {
+        const j = await getJSON(`https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(id)}&vs_currencies=usd`);
+        const price = j?.[id]?.usd;
+        if (typeof price !== "number") return log(`crypto: "${id}" not found`);
+        log(`Crypto ${id}: $${price.toLocaleString(undefined, { maximumFractionDigits: 2 })} USD`);
+      });
+    }
+    function cryptoTop() {
+      run(async () => {
+        const j = await getJSON("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=5&page=1");
+        if (!Array.isArray(j) || !j.length) return log("cryptoTop: unavailable");
+        const s = j.map(c => `${c.name} ($${Number(c.current_price).toLocaleString()})`).join(" | ");
+        log(`Top crypto (by mcap, 5): ${s}`);
+      });
+    }
+
+    function define(word) {
+      if (!word) { log('define usage: define("word")'); return; }
+      run(async () => {
+        const j = await getJSON(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+        if (!Array.isArray(j) || !j.length) return log(`No definition for "${word}"`);
+        const m = j[0]?.meanings?.[0]; const def = m?.definitions?.[0]?.definition ?? "N/A"; const pos = m?.partOfSpeech ?? "—";
+        log(`${word}: (${pos}) ${def}`);
+      });
+    }
+    function wiki(title) {
+      if (!title) { log('wiki usage: wiki("Topic")'); return; }
+      run(async () => {
+        const j = await getJSON(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+        const extract = (j.extract || "No summary").replace(/\s+/g, " ").trim();
+        log(`${j.title || title}: ${extract}`);
+      });
+    }
+    function hn(n = 5) {
+      run(async () => {
+        n = Math.max(1, Math.min(20, Number(n) || 5));
+        const j = await getJSON(`https://hn.algolia.com/api/v1/search?tags=front_page`);
+        const items = (j.hits || []).slice(0, n).map((h, i) => `${i+1}. ${h.title} — ${h.url || "link n/a"}`).join(" | ");
+        log(`Hacker News (top ${n}): ${items || "no results"}`);
+      });
+    }
+    function news(q="news", n=5) {
+      run(async () => {
+        n = Math.max(1, Math.min(20, Number(n) || 5));
+        const j = await getJSON(`https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(q)}&tags=story`);
+        const items = (j.hits || []).slice(0, n).map((h, i) => `${i+1}. ${h.title} — ${h.url || "link n/a"}`).join(" | ");
+        log(`News (“${q}”, ${n}): ${items || "no results"}`);
+      });
+    }
+
+    function spacex() {
+      run(async () => {
+        const j = await getJSON("https://api.spacexdata.com/v4/launches/next");
+        const when = j.date_utc ? new Date(j.date_utc).toLocaleString() : "TBD";
+        log(`SpaceX: ${j.name || "Next launch"} at ${when} UTC · Flight #${j.flight_number ?? "?"}`);
+      });
+    }
+    function iss() {
+      run(async () => {
+        const j = await getJSON("https://api.open-notify.org/iss-now.json");
+        const p = j.iss_position || {};
+        log(`ISS now: lat ${Number(p.latitude).toFixed(2)}, lon ${Number(p.longitude).toFixed(2)} (timestamp ${j.timestamp})`);
+      });
+    }
+    function quakes(hours = 24) {
+      run(async () => {
+        hours = Math.max(1, Math.min(168, Number(hours) || 24));
+        const url = hours <= 24
+          ? "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_day.geojson"
+          : "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson";
+        const j = await getJSON(url);
+        const feats = (j.features || []).slice(0, 5).map(f => {
+          const p = f.properties || {};
+          const t = p.time ? new Date(p.time).toLocaleString() : "n/a";
+          return `M${p.mag ?? "?"} · ${p.place || "n/a"} · ${t}`;
+        }).join(" | ");
+        log(`Significant earthquakes (last ${hours}h, up to 5): ${feats || "none"}`);
+      });
+    }
+
+    function gh(userOrOrg) {
+      if (!userOrOrg) { log('gh usage: gh("vercel")'); return; }
+      run(async () => {
+        const j = await getJSON(`https://api.github.com/users/${encodeURIComponent(userOrOrg)}`, { "Accept": "application/vnd.github+json" });
+        log(`GitHub: ${j.name || j.login || userOrOrg} · ${j.public_repos ?? 0} repos · ${j.followers ?? 0} followers · ${j.html_url || "n/a"}`);
+      });
+    }
+    function ghRepo(owner, repo) {
+      if (!owner || !repo) { log('ghRepo usage: ghRepo("owner","repo")'); return; }
+      run(async () => {
+        const j = await getJSON(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, { "Accept": "application/vnd.github+json" });
+        log(`Repo: ${j.full_name || `${owner}/${repo}`} · ⭐ ${j.stargazers_count ?? 0} · 🍴 ${j.forks_count ?? 0} · Issues ${j.open_issues_count ?? 0} · ${j.html_url || "n/a"}`);
+      });
+    }
+    function npmInfo(pkg) {
+      if (!pkg) { log('npmInfo usage: npmInfo("react")'); return; }
+      run(async () => {
+        const j = await getJSON(`https://registry.npmjs.org/${encodeURIComponent(pkg)}/latest`);
+        log(`npm: ${j.name}@${j.version} · ${j.description || "no description"}`);
+      });
+    }
+    function npmDownloads(pkg, range = "last-week") {
+      if (!pkg) { log('npmDownloads usage: npmDownloads("react", "last-week")'); return; }
+      run(async () => {
+        const j = await getJSON(`https://api.npmjs.org/downloads/point/${encodeURIComponent(range)}/${encodeURIComponent(pkg)}`);
+        log(`npm downloads: ${pkg} · ${range} · ${Number(j.downloads || 0).toLocaleString()}`);
+      });
+    }
+    function npmSearch(q, n=5) {
+      if (!q) { log('npmSearch usage: npmSearch("react", 5)'); return; }
+      run(async () => {
+        n = Math.max(1, Math.min(20, Number(n) || 5));
+        const j = await getJSON(`https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(q)}&size=${n}`);
+        const items = (j.objects||[]).map(o => `${o.package.name}@${o.package.version} — ${o.package.description||"no desc"}`).join(" | ");
+        log(`npm search (“${q}”, ${n}): ${items || "no results"}`);
+      });
+    }
+    function pypiInfo(pkg) {
+      if (!pkg) { log('pypiInfo usage: pypiInfo("requests")'); return; }
+      run(async () => {
+        const j = await getJSON(`https://pypi.org/pypi/${encodeURIComponent(pkg)}/json`);
+        const v = j?.info?.version; const s = j?.info?.summary || "no summary";
+        if (!v) return log(`PyPI: ${pkg} not found`);
+        log(`PyPI: ${pkg}==${v} · ${s}`);
+      });
+    }
+    function devto(n=5) {
+      run(async () => {
+        n = Math.max(1, Math.min(20, Number(n) || 5));
+        const j = await getJSON(`https://dev.to/api/articles?per_page=${n}&top=1`);
+        const items = (Array.isArray(j)?j:[]).slice(0,n).map((a,i)=>`${i+1}. ${a.title} — ${a.url}`).join(" | ");
+        log(`DEV.to (top, ${n}): ${items || "no results"}`);
+      });
+    }
+
+    function holidays(countryCode = "US", year = (new Date()).getFullYear()) {
+      run(async () => {
+        const j = await getJSON(`https://date.nager.at/api/v3/PublicHolidays/${encodeURIComponent(year)}/${encodeURIComponent(countryCode)}`);
+        if (!Array.isArray(j) || !j.length) return log("No holidays found.");
+        const firstFive = j.slice(0, 5).map(h => `${h.date} – ${h.localName} (${h.name})`).join(" | ");
+        log(`${countryCode.toUpperCase()} ${year} holidays (first 5): ${firstFive}`);
+      });
+    }
+    function country(code = "US") {
+      run(async () => {
+        const j = await getJSON(`https://restcountries.com/v3.1/alpha/${encodeURIComponent(code)}`);
+        const c = Array.isArray(j) ? j[0] : j;
+        if (!c) return log("country: not found");
+        log(`Country ${c.cca2 || code}: ${c.name?.common || "n/a"} · Capital ${c.capital?.[0] || "n/a"} · Pop ${Number(c.population||0).toLocaleString()} · Region ${c.region || "n/a"}`);
+      });
+    }
+
+    function joke() {
+      run(async () => {
+        const t = await getText("https://icanhazdadjoke.com/", { "Accept": "text/plain" });
+        log(`Joke: ${t.replace(/\s+/g, " ").trim()}`);
+      });
+    }
+    function quote() {
+      run(async () => {
+        const j = await getJSON("https://api.quotable.io/random");
+        log(`Quote: "${j.content}" — ${j.author}`);
+      });
+    }
+
+    // ---- Extra “utility” (no network)
+    function uuid() {
+      const u = ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>(c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+      log(`uuid: ${u}`);
+    }
+    function b64enc(text="") {
+      try { log(`b64enc: ${btoa(unescape(encodeURIComponent(text)))}`); } catch(e){ log("b64enc error:", String(e)); }
+    }
+    function b64dec(text="") {
+      try { log(`b64dec: ${decodeURIComponent(escape(atob(text)))}`); } catch(e){ log("b64dec error:", String(e)); }
+    }
+    function urlenc(text="") { log(`urlenc: ${encodeURIComponent(text)}`); }
+    function urldec(text="") { try { log(`urldec: ${decodeURIComponent(text)}`); } catch(e){ log("urldec error:", String(e)); } }
+    function count(text="") {
+      const chars = text.length, words = (text.trim().match(/\S+/g)||[]).length, lines = (text.match(/\n/g)||[]).length + 1;
+      log(`count: ${chars} chars · ${words} words · ${lines} lines`);
+    }
+    function calc(expr="") {
+      if (!expr) { log('calc usage: calc("2*(3+4)")'); return; }
+      try {
+        const fn = Function("Math","return ("+expr+")");
+        const val = fn(Math);
+        if (typeof val === "object") { log("calc: result is non-primitive (ignored)"); return; }
+        log(`calc: ${String(val)}`);
+      } catch(e){ log("calc error:", String(e)); }
+    }
+    function ping(url) {
+      if (!url) { log('ping usage: ping("https://example.com")'); return; }
+      run(async () => {
+        try {
+          const t0 = performance.now();
+          await getText(url);
+          const dt = Math.round(performance.now()-t0);
+          log(`ping: OK · ~${dt} ms`);
+        } catch(e) {
+          log(`ping: FAIL · ${String(e).replace(/^Error:\s*/,"")}`);
+        }
+      });
+    }
+
+    // ================= HELPERS: RENDER REF + PRINT DOCS BTN =================
+    function renderReference() {
+      const ref = document.getElementById('refTable');
+      ref.innerHTML = "";
+      COMMANDS.forEach(c => {
+        const name = document.createElement('div');
+        name.className = 'cmd-name';
+        name.innerHTML = `<code>${c.name}</code>`;
+        const desc = document.createElement('div');
+        desc.className = 'cmd-desc';
+        desc.textContent = `${c.desc} • ex: ${c.usage}`;
+        ref.appendChild(name); ref.appendChild(desc);
+      });
+    }
+
+    function printDocsToConsole() {
+      log("=== Console Utilities: Quick instructions ===");
+      log("Open DevTools → Console. Type help() for quick list or help(\"all\") for full reference.");
+      about();
+      log("=== Command Reference ===");
+      COMMANDS.forEach(c => log(`${c.name} :: ${c.desc} :: ex: ${c.usage}`));
+      log("Tip: geo(\"City\") sets your location; then call weather(), aqi(), or sun() with no args.");
+    }
+
+    document.getElementById('printDocsBtn').addEventListener('click', printDocsToConsole);
+
+    // Copy button for bookmarklet
+    document.getElementById('copyBookmarkletBtn').addEventListener('click', () => {
+      const el = document.getElementById('bookmarklet');
+      const text = el.textContent.trim();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => log("Bookmarklet copied to clipboard."));
+      } else {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const sel = window.getSelection();
+        sel.removeAllRanges(); sel.addRange(range);
+        try { document.execCommand('copy'); log("Bookmarklet copied to clipboard."); }
+        catch { log("Select text manually, then copy."); }
+        sel.removeAllRanges();
+      }
+    });
+
+    // ================= HELP (console) =================
+    function help(which = "popular") {
+      const popular = [
+        "Popular:",
+        "ip() | time(\"America/Chicago\") | geo(\"Austin\") | weather(\"Austin\") | aqi(\"Austin\") |",
+        "sun(\"Austin\") | hn(5) | news(\"AI\",5) | gh(\"vercel\") | ghRepo(\"vercel\",\"next.js\") |",
+        "npmInfo(\"react\") | npmSearch(\"react\",5) | npmDownloads(\"react\") |",
+        "crypto(\"bitcoin\") | cryptoTop() | fx(\"USD\",\"EUR\",100) |",
+        "wiki(\"Teotihuacan\") | define(\"serendipity\") | spacex() | iss() | quakes(24) |",
+        "holidays(\"US\", 2025) | btc() | tzList(\"America/\") | ua() | uuid() | calc(\"2+2\")"
+      ];
+      if (which === "all") { printDocsToConsole(); } else { log(popular.join(" ")); }
+    }
+
+    // ================= INIT =================
+    (function init(){
+      renderReference();
+      log("Console Utilities ready. Click “Print docs to Console” or type help() / help(\"all\").");
+    })();
+  </script>
+</body>
+</html>
